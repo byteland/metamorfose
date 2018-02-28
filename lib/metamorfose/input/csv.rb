@@ -3,24 +3,27 @@ require 'csv'
 module Metamorfose
   module Input
     class CSV
-      def initialize(filename:, headers: true, col_sep: ',', converters: :all)
+      attr_reader :filename, :csv_options
+
+      def initialize(filename:, csv_options: {})
         @filename = filename
-        @headers = headers
-        @col_sep = col_sep
-        @converters = converters
+        @csv_options = csv_options
       end
 
       def each
-        csv = ::CSV.open(
-          @filename,
-          headers: @headers,
-          col_sep: @col_sep,
-          converters: @converters,
-          header_converters: :symbol
-        )
+        @csv ||= ::CSV.open(@filename, @csv_options)
 
-        csv.each { |row| yield row.to_hash }
-        csv.close
+        @csv.each do |row|
+          yield headers? ? row.to_hash : row
+        end
+
+        @csv.close
+      end
+
+      private
+
+      def headers?
+        @csv.headers
       end
     end
   end
