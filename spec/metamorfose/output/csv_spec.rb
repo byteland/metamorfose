@@ -1,62 +1,53 @@
 RSpec.describe Metamorfose::Output::CSV do
-  before :all do
+  let(:csv_sample) do
+    <<~CSV
+      name,age
+      bar,42
+    CSV
+  end
+
+  before :each do
     @sample_file = Tempfile.new 'sample_file.csv'
     @sample_file.close
   end
 
-  after :all do
+  after :each do
     @sample_file.unlink
   end
 
-  it 'should write the data to a CSV file' do
-    output = run_etl filename: @sample_file.path
+  it 'should write the provided data to a CSV file' do
+    settings = { filename: @sample_file.path }
+    output = execute_etl(settings)
 
-    expected_output = <<~CSV
-      name,age
-      bar,29
-    CSV
-
-    expect(output).to eq expected_output
+    expect(output).to eq csv_sample
   end
 
   it 'should write the data to a CSV file with provided options' do
-    output = run_etl filename: @sample_file.path, csv_options: { col_sep: ';' }
+    settings = { filename: @sample_file.path, col_sep: ';' }
+    output = execute_etl(settings)
 
-    expected_output = <<~CSV
-      name;age
-      bar;29
-    CSV
-
-    expect(output).to eq expected_output
+    expect(output).to eq csv_sample.gsub(',', ';')
   end
 
   it 'should write only data from provided headers' do
-    output = run_etl filename: @sample_file.path, headers: [:age]
+    settings = { filename: @sample_file.path, headers: [:age] }
+    output = execute_etl(settings)
 
     expected_output = <<~CSV
       age
-      29
+      42
     CSV
 
     expect(output).to eq expected_output
   end
+end
 
-  private
-
-  def run_etl(filename:, csv_options: nil, headers: nil)
-    job = Kiba.parse do
-      source Kiba::Common::Sources::Enumerable, [
-        { name: 'bar', age: 29 }
-      ]
-
-      destination Metamorfose::Output::CSV,
-        filename: filename,
-        csv_options: csv_options,
-        headers: headers
-    end
-
-    Kiba.run(job)
-
-    IO.read(filename)
+def execute_etl(settings)
+  job = Kiba.parse do
+    source Kiba::Common::Sources::Enumerable, [{ name: 'bar', age: '42' }]
+    destination Metamorfose::Output::CSV, settings: settings
   end
+
+  Kiba.run(job)
+  IO.read(@sample_file.path)
 end
