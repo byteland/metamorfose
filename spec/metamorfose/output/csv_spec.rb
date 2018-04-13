@@ -41,8 +41,6 @@ RSpec.describe Metamorfose::Output::CSV do
     expect(output).to eq expected_output
   end
 
-  private
-
   def execute_etl(settings)
     job = Kiba.parse do
       source Kiba::Common::Sources::Enumerable, [{ name: 'bar', age: '42' }]
