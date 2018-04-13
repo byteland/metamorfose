@@ -3,15 +3,15 @@ require 'csv'
 module Metamorfose
   module Input
     class CSV
-      attr_reader :filename, :csv_options
+      attr_reader :filename, :settings
 
-      def initialize(filename:, csv_options: {})
-        @filename = filename
-        @csv_options = csv_options
+      def initialize(settings: {})
+        @filename = settings.delete(:filename)
+        @settings = settings
       end
 
       def each
-        @csv ||= ::CSV.open(@filename, @csv_options)
+        @csv ||= ::CSV.open(@filename, @settings)
 
         @csv.each do |row|
           yield headers? ? row.to_hash : row

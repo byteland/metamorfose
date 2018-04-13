@@ -1,47 +1,34 @@
 RSpec.describe Metamorfose::Input::CSV do
-  before :all do
-    @csv_sample_data = csv = <<~CSV
-      name,age
-      foo,42
-    CSV
+  let(:filename) { File.join(Metamorfose.root_path, 'spec', 'support', 'sample.csv') }
 
-    @sample_file = Tempfile.new 'sample_file.csv'
+  it 'should reads a CSV file with headers' do
+    expected_output = [{ 'id' => '1', 'name' => 'foo', 'age' => '42' }]
 
-    @sample_file.write @csv_sample_data
-    @sample_file.rewind
-    @sample_file.close
-  end
+    settings = { filename: filename, headers: true }
+    rows = execute_etl(settings: settings)
 
-  after :all do
-    @sample_file.unlink
-  end
-
-  it 'should reads the CSV file with headers' do
-    options = { headers: true }
-    expected_output = [{ 'name' => 'foo', 'age' => '42' }]
-
-    run_etl filename: @sample_file.path, csv_options: options, expected_output: expected_output
+    expect(rows).to eq expected_output
   end
 
   it 'should reads a CSV file without headers' do
-    expected_output = [['name', 'age'], ['foo', '42']]
-    run_etl filename: @sample_file.path, expected_output: expected_output
+    expected_output = [['id', 'name', 'age'], ['1', 'foo', '42']]
+
+    settings = { filename: filename }
+    rows = execute_etl(settings: settings)
+
+    expect(rows).to eq expected_output
+  end
+end
+
+def execute_etl(settings: {})
+  output_rows = []
+
+  job = Kiba.parse do
+    source Metamorfose::Input::CSV, settings: settings
+    transform { |row| output_rows << row }
   end
 
-  def run_etl(filename:, csv_options: {}, expected_output:)
-    test = self
+  Kiba.run(job)
 
-    job = Kiba.parse do
-      rows = []
-
-      source Metamorfose::Input::CSV, filename: filename, csv_options: csv_options
-      transform { |row| rows << row }
-
-      post_process do
-        test.expect(rows).to test.eq expected_output
-      end
-    end
-
-    Kiba.run(job)
-  end
+  output_rows
 end
