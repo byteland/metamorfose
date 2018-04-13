@@ -18,17 +18,17 @@ RSpec.describe Metamorfose::Input::CSV do
 
     expect(rows).to eq expected_output
   end
-end
 
-def execute_etl(settings: {})
-  output_rows = []
+  def execute_etl(settings: {})
+    output_rows = []
 
-  job = Kiba.parse do
-    source Metamorfose::Input::CSV, settings: settings
-    transform { |row| output_rows << row }
+    job = Kiba.parse do
+      source Metamorfose::Input::CSV, settings: settings
+      transform { |row| output_rows << row }
+    end
+
+    Kiba.run(job)
+
+    output_rows
   end
-
-  Kiba.run(job)
-
-  output_rows
 end

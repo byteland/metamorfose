@@ -40,14 +40,16 @@ RSpec.describe Metamorfose::Output::CSV do
 
     expect(output).to eq expected_output
   end
-end
 
-def execute_etl(settings)
-  job = Kiba.parse do
-    source Kiba::Common::Sources::Enumerable, [{ name: 'bar', age: '42' }]
-    destination Metamorfose::Output::CSV, settings: settings
+  private
+
+  def execute_etl(settings)
+    job = Kiba.parse do
+      source Kiba::Common::Sources::Enumerable, [{ name: 'bar', age: '42' }]
+      destination Metamorfose::Output::CSV, settings: settings
+    end
+
+    Kiba.run(job)
+    IO.read(@sample_file.path)
   end
-
-  Kiba.run(job)
-  IO.read(@sample_file.path)
 end
