@@ -1,3 +1,5 @@
+require 'tempfile'
+
 RSpec.describe Metamorfose::Output::CSV do
   let(:csv_sample) do
     <<~CSV
